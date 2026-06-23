@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>One NZ CDC — Night Shift Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; color: #c9d1d9; font-family: 'Courier New', monospace; }
+  .topbar { background: #0d1117; border-bottom: 1px solid #1f2937; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { color: #00b4d8; font-size: 13px; font-weight: bold; letter-spacing: 2px; }
+  .analyst-info { font-size: 12px; color: #6b7280; }
+  .analyst-info span { color: #00b4d8; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 20px 24px 0; }
+  .metric { background: #0d1117; border: 1px solid #1f2937; border-radius: 8px; padding: 16px; text-align: center; }
+  .metric .num { font-size: 32px; font-weight: bold; }
+  .metric .label { font-size: 11px; color: #6b7280; margin-top: 4px; letter-spacing: 1px; }
+  .num.red { color: #ef4444; }
+  .num.orange { color: #f97316; }
+  .num.green { color: #22c55e; }
+  .num.blue { color: #00b4d8; }
+  .section-title { padding: 20px 24px 10px; font-size: 11px; color: #6b7280; letter-spacing: 2px; }
+  .alerts { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 8px; }
+  .alert-row { background: #0d1117; border: 1px solid #1f2937; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: border-color 0.2s; text-decoration: none; color: inherit; }
+  .alert-row:hover { border-color: #00b4d8; }
+  .alert-row.closed { opacity: 0.45; }
+  .sev { font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 4px; min-width: 68px; text-align: center; letter-spacing: 1px; }
+  .sev.Critical { background: #450a0a; color: #ef4444; border: 1px solid #ef4444; }
+  .sev.High { background: #431407; color: #f97316; border: 1px solid #f97316; }
+  .sev.Medium { background: #422006; color: #eab308; border: 1px solid #eab308; }
+  .sev.Low { background: #052e16; color: #22c55e; border: 1px solid #22c55e; }
+  .alert-id { font-size: 11px; color: #6b7280; min-width: 70px; }
+  .alert-title { flex: 1; font-size: 13px; color: #e5e7eb; }
+  .alert-meta { font-size: 11px; color: #6b7280; text-align: right; }
+  .alert-meta .time { color: #00b4d8; }
+  .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+  .status-badge.open { background: #1f2937; color: #9ca3af; }
+  .status-badge.closed { background: #052e16; color: #22c55e; }
+  .mitre { font-size: 10px; color: #6b7280; min-width: 80px; }
+  .handover-btn { margin: 0 24px 24px; display: block; background: #00b4d8; color: #0a0e1a; border: none; padding: 12px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; letter-spacing: 1px; cursor: pointer; text-align: center; text-decoration: none; }
+  .handover-btn:hover { background: #0284c7; }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .live-dot { display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">⬡ ONE NZ — CYBER DEFENCE CENTRE</div>
+  <div class="analyst-info">
+    <span class="live-dot pulse"></span>LIVE SHIFT &nbsp;|&nbsp;
+    Analyst: <span>{{ analyst }}</span> &nbsp;|&nbsp;
+    Shift start: <span>{{ shift_start }}</span> &nbsp;|&nbsp;
+    <span id="clock">{{ current_time }}</span>
+  </div>
+</div>
+
+<div class="metrics">
+  <div class="metric"><div class="num blue">{{ alerts|length }}</div><div class="label">TOTAL ALERTS</div></div>
+  <div class="metric"><div class="num red">{{ critical_count }}</div><div class="label">CRITICAL</div></div>
+  <div class="metric"><div class="num orange">{{ high_count }}</div><div class="label">HIGH</div></div>
+  <div class="metric"><div class="num green">{{ closed_count }}</div><div class="label">CLOSED</div></div>
+</div>
+
+<div class="section-title">▸ ACTIVE ALERT QUEUE</div>
+
+<div class="alerts">
+  {% for alert in alerts %}
+  <a href="/alert/{{ alert.id }}" class="alert-row {% if alert.status == 'closed' %}closed{% endif %}">
+    <span class="sev {{ alert.severity }}">{{ alert.severity.upper() }}</span>
+    <span class="alert-id">{{ alert.id }}</span>
+    <span class="alert-title">{{ alert.title }}</span>
+    <span class="mitre">{{ alert.mitre }}</span>
+    <span class="alert-meta">
+      <div class="time">{{ alert.timestamp }}</div>
+      <div>{{ alert.source }}</div>
+    </span>
+    <span class="status-badge {{ alert.status }}">{{ alert.status.upper() }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+<a href="/handover" class="handover-btn">⬡ GENERATE SHIFT HANDOVER REPORT</a>
+
+<script>
+  setInterval(() => {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toTimeString().split(' ')[0];
+  }, 1000);
+</script>
+</body>
+</html>

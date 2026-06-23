@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ alert.id }} — {{ alert.title }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; color: #c9d1d9; font-family: 'Courier New', monospace; }
+  .topbar { background: #0d1117; border-bottom: 1px solid #1f2937; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { color: #00b4d8; font-size: 13px; font-weight: bold; letter-spacing: 2px; }
+  .back { color: #6b7280; font-size: 12px; text-decoration: none; }
+  .back:hover { color: #00b4d8; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 20px 24px; }
+  .card { background: #0d1117; border: 1px solid #1f2937; border-radius: 8px; padding: 18px; }
+  .card.full { grid-column: 1 / -1; }
+  .card-title { font-size: 10px; color: #6b7280; letter-spacing: 2px; margin-bottom: 14px; }
+  .alert-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .sev { font-size: 10px; font-weight: bold; padding: 4px 10px; border-radius: 4px; letter-spacing: 1px; }
+  .sev.Critical { background: #450a0a; color: #ef4444; border: 1px solid #ef4444; }
+  .sev.High { background: #431407; color: #f97316; border: 1px solid #f97316; }
+  .sev.Medium { background: #422006; color: #eab308; border: 1px solid #eab308; }
+  .sev.Low { background: #052e16; color: #22c55e; border: 1px solid #22c55e; }
+  .alert-title-text { font-size: 16px; color: #e5e7eb; font-weight: bold; }
+  .field { margin-bottom: 10px; }
+  .field-label { font-size: 10px; color: #6b7280; letter-spacing: 1px; margin-bottom: 3px; }
+  .field-value { font-size: 13px; color: #e5e7eb; }
+  .field-value.red { color: #ef4444; }
+  .field-value.blue { color: #00b4d8; }
+  .raw-log { background: #010409; border: 1px solid #1f2937; border-radius: 4px; padding: 12px; font-size: 11px; color: #22c55e; word-break: break-all; margin-top: 8px; }
+  .runbook-step { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #1f2937; align-items: flex-start; }
+  .runbook-step:last-child { border-bottom: none; }
+  .step-num { color: #00b4d8; font-size: 11px; min-width: 20px; }
+  .step-text { font-size: 12px; color: #9ca3af; line-height: 1.5; }
+  .triage-section { display: flex; flex-direction: column; gap: 12px; }
+  label { font-size: 10px; color: #6b7280; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+  select, textarea { width: 100%; background: #010409; border: 1px solid #1f2937; border-radius: 4px; color: #e5e7eb; font-family: 'Courier New', monospace; font-size: 12px; padding: 8px; }
+  select:focus, textarea:focus { outline: none; border-color: #00b4d8; }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn { padding: 10px 16px; border-radius: 6px; border: none; font-family: 'Courier New', monospace; font-size: 12px; font-weight: bold; cursor: pointer; letter-spacing: 1px; width: 100%; margin-top: 4px; }
+  .btn-close { background: #052e16; color: #22c55e; border: 1px solid #22c55e; }
+  .btn-close:hover { background: #14532d; }
+  .btn-escalate { background: #450a0a; color: #ef4444; border: 1px solid #ef4444; }
+  .btn-escalate:hover { background: #7f1d1d; }
+  .btn-save { background: #0d1117; color: #00b4d8; border: 1px solid #00b4d8; }
+  .btn-save:hover { background: #1f2937; }
+  .mitre-badge { display: inline-block; background: #1e1b4b; color: #818cf8; border: 1px solid #4338ca; border-radius: 4px; padding: 3px 8px; font-size: 11px; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #022c22; border: 1px solid #22c55e; color: #22c55e; padding: 10px 18px; border-radius: 6px; font-size: 12px; display: none; }
+  .status-current { font-size: 11px; padding: 3px 10px; border-radius: 10px; display: inline-block; }
+  .status-current.open { background: #1f2937; color: #9ca3af; }
+  .status-current.closed { background: #052e16; color: #22c55e; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">⬡ ONE NZ CDC — ALERT INVESTIGATION</div>
+  <a href="/" class="back">← BACK TO DASHBOARD</a>
+</div>
+
+<div class="grid">
+
+  <!-- Alert Overview -->
+  <div class="card full">
+    <div class="card-title">ALERT OVERVIEW</div>
+    <div class="alert-header">
+      <span class="sev {{ alert.severity }}">{{ alert.severity.upper() }}</span>
+      <span class="alert-title-text">{{ alert.title }}</span>
+      <span class="status-current {{ alert.status }}" id="status-display">{{ alert.status.upper() }}</span>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:16px;">
+      <div class="field"><div class="field-label">ALERT ID</div><div class="field-value blue">{{ alert.id }}</div></div>
+      <div class="field"><div class="field-label">TIMESTAMP</div><div class="field-value">{{ alert.timestamp }}</div></div>
+      <div class="field"><div class="field-label">SOURCE</div><div class="field-value">{{ alert.source }}</div></div>
+      <div class="field"><div class="field-label">MITRE ATT&CK</div><div><span class="mitre-badge">{{ alert.mitre }} — {{ alert.mitre_name }}</span></div></div>
+      <div class="field"><div class="field-label">SOURCE IP</div><div class="field-value red">{{ alert.source_ip }}</div></div>
+      <div class="field"><div class="field-label">DESTINATION</div><div class="field-value">{{ alert.destination }}</div></div>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <div class="field-label">DESCRIPTION</div>
+      <div class="field-value" style="line-height:1.6; color:#9ca3af;">{{ alert.description }}</div>
+    </div>
+    <div class="field-label" style="margin-top:12px;">RAW LOG</div>
+    <div class="raw-log">{{ alert.raw_log }}</div>
+  </div>
+
+  <!-- Runbook -->
+  <div class="card">
+    <div class="card-title">▸ {{ runbook.title }}</div>
+    {% for step in runbook.steps %}
+    <div class="runbook-step">
+      <span class="step-num">{{ loop.index }}.</span>
+      <span class="step-text">{{ step }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Triage Panel -->
+  <div class="card">
+    <div class="card-title">▸ TRIAGE & RESPONSE</div>
+    <div class="triage-section">
+
+      <div>
+        <label>SET PRIORITY</label>
+        <select id="priority-select">
+          <option value="">— Select priority —</option>
+          {% for key, val in priorities.items() %}
+          <option value="{{ key }}" {% if alert.priority == key %}selected{% endif %}>{{ key }} — {{ val[:40] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label>INVESTIGATION NOTES</label>
+        <textarea id="notes-input" placeholder="Document your findings, actions taken, IOCs identified...">{{ alert.notes }}</textarea>
+      </div>
+
+      <div>
+        <label>ESCALATE TO</label>
+        <select id="escalate-select">
+          <option value="">— No escalation —</option>
+          {% for analyst in analysts %}
+          <option value="{{ analyst }}" {% if alert.escalated_to == analyst %}selected{% endif %}>{{ analyst }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button class="btn btn-save" onclick="saveAlert()">SAVE NOTES</button>
+      <button class="btn btn-close" onclick="closeAlert()">✓ MARK AS CLOSED</button>
+      <button class="btn btn-escalate" onclick="escalateAlert()">⚠ ESCALATE NOW</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">✓ Alert updated</div>
+
+<script>
+  const alertId = '{{ alert.id }}';
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2500);
+  }
+
+  function saveAlert() {
+    fetch('/update_alert', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        id: alertId,
+        priority: document.getElementById('priority-select').value,
+        notes: document.getElementById('notes-input').value,
+        escalated_to: document.getElementById('escalate-select').value
+      })
+    }).then(() => showToast('✓ Notes saved'));
+  }
+
+  function closeAlert() {
+    fetch('/update_alert', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        id: alertId,
+        status: 'closed',
+        priority: document.getElementById('priority-select').value,
+        notes: document.getElementById('notes-input').value
+      })
+    }).then(() => {
+      document.getElementById('status-display').textContent = 'CLOSED';
+      document.getElementById('status-display').className = 'status-current closed';
+      showToast('✓ Alert closed');
+    });
+  }
+
+  function escalateAlert() {
+    const analyst = document.getElementById('escalate-select').value;
+    if (!analyst) { showToast('⚠ Select an analyst to escalate to'); return; }
+    fetch('/update_alert', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        id: alertId,
+        escalated_to: analyst,
+        notes: document.getElementById('notes-input').value
+      })
+    }).then(() => showToast('⚠ Escalated to ' + analyst));
+  }
+</script>
+</body>
+</html>
